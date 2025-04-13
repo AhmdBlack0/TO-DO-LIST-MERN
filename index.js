@@ -30,6 +30,7 @@ mongoose
 // ======================
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });
 
@@ -68,7 +69,7 @@ const authMiddleware = (req, res, next) => {
 
 // Register
 app.post("/api/register", async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, email } = req.body;
 
   try {
     const existing = await User.findOne({ username });
@@ -77,7 +78,11 @@ app.post("/api/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, password: hashedPassword });
+    const user = await User.create({
+      username,
+      password: hashedPassword,
+      email,
+    });
 
     const token = jwt.sign(
       { id: user._id, username: user.username },
@@ -86,7 +91,7 @@ app.post("/api/register", async (req, res) => {
     );
     res.status(201).json({ token });
   } catch (err) {
-    res.status(500).json({ error: "Registration failed" });
+    res.status(500).json({ error: err });
   }
 });
 
